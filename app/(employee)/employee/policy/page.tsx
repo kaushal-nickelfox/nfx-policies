@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { usePolicies } from '@/hooks/usePolicies';
-import { useSession } from 'next-auth/react';
 import Modal from '@/components/ui/Modal';
 import { FullPageSpinner } from '@/components/ui/Spinner';
 import {

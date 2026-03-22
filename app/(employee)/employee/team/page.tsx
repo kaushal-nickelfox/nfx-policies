@@ -151,7 +151,7 @@ export default function TeamProgressPage() {
             <p style={{ textAlign: 'center', color: '#9CA3AF', fontSize: 13, padding: '32px 0' }}>No policy data available.</p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {policyData.map((p, i) => {
+              {policyData.map((p, _i) => {
                 const pct2 = Math.round(p.completion_percent);
                 const color = pct2 >= 80 ? '#10B981' : pct2 >= 50 ? '#F59E0B' : '#EF4444';
                 return (
