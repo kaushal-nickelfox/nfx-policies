@@ -5,6 +5,7 @@ import { getUserProfile } from '@/lib/graph/graphClient';
 import type { UserRole } from '@/types/index';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  trustHost: true,
   providers: [
     MicrosoftEntraID({
       clientId: process.env.AUTH_MICROSOFT_ENTRA_ID_ID!,
