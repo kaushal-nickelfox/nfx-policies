@@ -1,23 +1,8 @@
 {
   "functions": {
-    "app/api/policies/[id]/route.ts": {
-      "maxDuration": 30
-    },
-    "app/api/policies/[id]/html/route.ts": {
-      "maxDuration": 30
-    },
-    "app/api/policies/[id]/download/route.ts": {
-      "maxDuration": 30
-    }
+    "app/api/policies/[id]/route.ts": { "maxDuration": 30 },
+    "app/api/policies/[id]/html/route.ts": { "maxDuration": 30 },
+    "app/api/policies/route.ts": { "maxDuration": 20 }
   },
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
-      ]
-    }
-  ]
+  "crons": []
 }
