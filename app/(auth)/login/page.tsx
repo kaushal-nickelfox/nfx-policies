@@ -27,7 +27,7 @@ export default function LoginPage() {
       <div style={{
         width: isMobile ? '100%' : '50%',
         flexShrink: 0,
-        backgroundColor: '#3E2B4D',
+        backgroundColor: '#1E1B2E',
         display: 'flex',
         flexDirection: 'column',
         padding: isMobile ? '32px 24px' : '52px 56px',
@@ -35,8 +35,8 @@ export default function LoginPage() {
         overflow: 'hidden',
       }}>
         {/* Blobs */}
-        <div style={{ position: 'absolute', borderRadius: '50%', width: 500, height: 500, top: -140, right: -140, background: '#563D66', filter: 'blur(90px)', opacity: 0.6, pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', borderRadius: '50%', width: 380, height: 380, bottom: -100, right: -80, background: '#563D66', filter: 'blur(75px)', opacity: 0.5, pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', borderRadius: '50%', width: 500, height: 500, top: -140, right: -140, background: '#2D2A45', filter: 'blur(90px)', opacity: 0.8, pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', borderRadius: '50%', width: 380, height: 380, bottom: -100, right: -80, background: '#2D2A45', filter: 'blur(75px)', opacity: 0.6, pointerEvents: 'none' }} />
 
         {/* Logo */}
         <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', gap: 14, marginBottom: isMobile ? 24 : 56 }}>
@@ -75,12 +75,12 @@ export default function LoginPage() {
               <div key={title} style={{
                 display: 'flex', alignItems: 'center', gap: 16,
                 padding: '14px 18px', borderRadius: 14,
-                background: 'rgba(255,255,255,0.05)', border: '1px solid #5E4E6B',
+                background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
               }}>
                 <div style={{
                   width: 40, height: 40, borderRadius: 10, flexShrink: 0,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: '#4E3A5D', border: '1px solid rgba(255,255,255,0.10)',
+                  background: '#2D2A45', border: '1px solid rgba(255,255,255,0.10)',
                 }}>
                   <Icon size={17} color="rgba(255,255,255,0.82)" />
                 </div>

@@ -7,9 +7,9 @@ import type { UserRole } from '@/types/index';
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     MicrosoftEntraID({
-      clientId: process.env.AUTH_MICROSOFT_ENTRA_ID_ID || 'placeholder',
-      clientSecret: process.env.AUTH_MICROSOFT_ENTRA_ID_SECRET || 'placeholder',
-      issuer: `https://login.microsoftonline.com/${process.env.AUTH_MICROSOFT_ENTRA_ID_TENANT_ID || 'common'}/v2.0`,
+      clientId: process.env.AUTH_MICROSOFT_ENTRA_ID_ID!,
+      clientSecret: process.env.AUTH_MICROSOFT_ENTRA_ID_SECRET!,
+      tenantId: process.env.AUTH_MICROSOFT_ENTRA_ID_TENANT_ID,
       authorization: {
         params: {
           scope: 'openid profile email User.Read',

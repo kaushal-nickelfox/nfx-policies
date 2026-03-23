@@ -11,6 +11,7 @@ export default function EmployeeLayout({ children }: { children: React.ReactNode
       <main style={{
         flex: 1,
         padding: isMobile ? '20px 16px' : '32px 36px',
+        paddingTop: isMobile ? 76 : 32,
         overflowY: 'auto',
         minWidth: 0,
       }}>

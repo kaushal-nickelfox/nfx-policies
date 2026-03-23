@@ -2,6 +2,7 @@
 
 import { useAcknowledgements } from '@/hooks/useAcknowledgements';
 import { usePolicies } from '@/hooks/usePolicies';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import { FullPageSpinner } from '@/components/ui/Spinner';
 import { CheckCircle, FileText, Calendar, Hash, Shield, BookOpen, Clock, CheckSquare, TrendingUp } from 'lucide-react';
 import type { PolicyCategory } from '@/types/index';
@@ -24,6 +25,7 @@ const categoryColor: Record<string, string> = {
 export default function AcknowledgementsPage() {
   const { data: acks, isLoading: acksLoading } = useAcknowledgements();
   const { data: policies, isLoading: policiesLoading } = usePolicies();
+  const isMobile = useIsMobile();
 
   const isLoading = acksLoading || policiesLoading;
   if (isLoading) return <FullPageSpinner />;
@@ -63,55 +65,56 @@ export default function AcknowledgementsPage() {
       </div>
 
       {/* ── STATS ROW ─────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 28 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(3, 1fr)', gap: isMobile ? 10 : 16, marginBottom: 28 }}>
         {/* Acknowledged */}
         <div style={{
           background: '#fff', border: '1px solid #e2e8f0', borderRadius: 16,
-          padding: '20px 24px', boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
-          display: 'flex', alignItems: 'center', gap: 16,
+          padding: isMobile ? '14px' : '20px 24px', boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+          display: 'flex', alignItems: 'center', gap: isMobile ? 10 : 16,
         }}>
-          <div style={{ width: 48, height: 48, borderRadius: 12, background: '#D1FAE5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <CheckCircle size={22} color="#059669" />
+          <div style={{ width: isMobile ? 36 : 48, height: isMobile ? 36 : 48, borderRadius: 12, background: '#D1FAE5', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <CheckCircle size={isMobile ? 18 : 22} color="#059669" />
           </div>
           <div>
-            <p style={{ margin: 0, fontSize: 28, fontWeight: 800, color: '#111827', lineHeight: 1 }}>{ackCount}</p>
-            <p style={{ margin: '6px 0 0', fontSize: 13, color: '#6B7280', fontWeight: 500 }}>Acknowledged</p>
+            <p style={{ margin: 0, fontSize: isMobile ? 22 : 28, fontWeight: 800, color: '#111827', lineHeight: 1 }}>{ackCount}</p>
+            <p style={{ margin: '4px 0 0', fontSize: isMobile ? 11 : 13, color: '#6B7280', fontWeight: 500 }}>Acknowledged</p>
           </div>
         </div>
 
         {/* Pending */}
         <div style={{
           background: '#fff', border: '1px solid #e2e8f0', borderRadius: 16,
-          padding: '20px 24px', boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
-          display: 'flex', alignItems: 'center', gap: 16,
+          padding: isMobile ? '14px' : '20px 24px', boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+          display: 'flex', alignItems: 'center', gap: isMobile ? 10 : 16,
         }}>
-          <div style={{ width: 48, height: 48, borderRadius: 12, background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Clock size={22} color="#D97706" />
+          <div style={{ width: isMobile ? 36 : 48, height: isMobile ? 36 : 48, borderRadius: 12, background: '#FEF3C7', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Clock size={isMobile ? 18 : 22} color="#D97706" />
           </div>
           <div>
-            <p style={{ margin: 0, fontSize: 28, fontWeight: 800, color: '#111827', lineHeight: 1 }}>{pendingPolicies.length}</p>
-            <p style={{ margin: '6px 0 0', fontSize: 13, color: '#6B7280', fontWeight: 500 }}>Pending</p>
+            <p style={{ margin: 0, fontSize: isMobile ? 22 : 28, fontWeight: 800, color: '#111827', lineHeight: 1 }}>{pendingPolicies.length}</p>
+            <p style={{ margin: '4px 0 0', fontSize: isMobile ? 11 : 13, color: '#6B7280', fontWeight: 500 }}>Pending</p>
           </div>
         </div>
 
-        {/* Completion */}
+        {/* Completion — spans full width on mobile */}
         <div style={{
           background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
           border: '1px solid #4338CA', borderRadius: 16,
-          padding: '20px 24px', boxShadow: '0 4px 16px rgba(79,70,229,0.25)',
-          display: 'flex', alignItems: 'center', gap: 16,
+          padding: isMobile ? '14px' : '20px 24px', boxShadow: '0 4px 16px rgba(79,70,229,0.25)',
+          display: 'flex', alignItems: 'center', gap: isMobile ? 10 : 16,
+          gridColumn: isMobile ? '1 / -1' : 'auto',
         }}>
-          <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <TrendingUp size={22} color="#fff" />
+          <div style={{ width: isMobile ? 36 : 48, height: isMobile ? 36 : 48, borderRadius: 12, background: 'rgba(255,255,255,0.15)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <TrendingUp size={isMobile ? 18 : 22} color="#fff" />
           </div>
           <div>
-            <p style={{ margin: 0, fontSize: 28, fontWeight: 800, color: '#fff', lineHeight: 1 }}>{pct}%</p>
-            <p style={{ margin: '6px 0 0', fontSize: 13, color: 'rgba(255,255,255,0.75)', fontWeight: 500 }}>Completion Rate</p>
+            <p style={{ margin: 0, fontSize: isMobile ? 22 : 28, fontWeight: 800, color: '#fff', lineHeight: 1 }}>{pct}%</p>
+            <p style={{ margin: '4px 0 0', fontSize: isMobile ? 11 : 13, color: 'rgba(255,255,255,0.75)', fontWeight: 500 }}>Completion Rate</p>
           </div>
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 20, alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 340px', gap: 20, alignItems: 'start' }}>
 
         {/* ── LEFT: HISTORY ──────────────────────── */}
         <div>
