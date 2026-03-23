@@ -10,7 +10,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     MicrosoftEntraID({
       clientId: process.env.AUTH_MICROSOFT_ENTRA_ID_ID!,
       clientSecret: process.env.AUTH_MICROSOFT_ENTRA_ID_SECRET!,
-      issuer: `https://login.microsoftonline.com/${process.env.AUTH_MICROSOFT_ENTRA_ID_TENANT_ID}/v2.0`,
+      tenantId: process.env.AUTH_MICROSOFT_ENTRA_ID_TENANT_ID!,
       authorization: {
         params: {
           scope: 'openid profile email User.Read',
@@ -26,6 +26,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (!account || !user.email) return false;
 
       try {
+        if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+          console.error('Missing Supabase env vars — check NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY');
+          return false;
+        }
+
         const supabase = createServiceClient();
         const accessToken = account.access_token as string;
 
@@ -97,7 +102,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
           token.role = (employee?.role as UserRole) || 'employee';
           token.department = employee?.department || null;
-        } catch {
+        } catch (err) {
+          console.error('JWT callback error:', err);
           token.role = (token.role as UserRole) || 'employee';
           token.department = token.department || null;
         }

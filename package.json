@@ -13,7 +13,6 @@
     "prepare": "node -e \"if(process.env.CI !== 'true' && process.env.VERCEL !== '1'){require('child_process').execSync('husky install',{stdio:'inherit'})}\" || true"
   },
   "dependencies": {
-    "@auth/core": "^0.34.0",
     "@hookform/resolvers": "^3.9.0",
     "@microsoft/microsoft-graph-client": "^3.0.7",
     "@react-pdf-viewer/core": "^3.12.0",
