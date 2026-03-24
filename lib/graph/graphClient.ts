@@ -92,18 +92,39 @@ export async function getDocumentStream(fileUrl: string): Promise<Buffer> {
 export async function downloadDocumentAppOnly(
   sharingUrl: string
 ): Promise<{ buffer: ArrayBuffer; mimeType: string }> {
-  const client = getAppOnlyClient();
-  const encodedUrl = Buffer.from(sharingUrl).toString('base64');
-  const shareId = `u!${encodedUrl.replace(/=/g, '').replace(/\//g, '_').replace(/\+/g, '-')}`;
+  // Try Graph API with app-only token first
+  try {
+    const client = getAppOnlyClient();
+    const encodedUrl = Buffer.from(sharingUrl).toString('base64');
+    const shareId = `u!${encodedUrl.replace(/=/g, '').replace(/\//g, '_').replace(/\+/g, '-')}`;
 
-  const item = await client.api(`/shares/${shareId}/driveItem`).select('name,file').get();
-  const mimeType = (item?.file?.mimeType as string) || 'application/pdf';
+    const item = await client.api(`/shares/${shareId}/driveItem`).select('name,file').get();
+    const mimeType = (item?.file?.mimeType as string) || 'application/pdf';
 
-  const buffer = await client
-    .api(`/shares/${shareId}/driveItem/content`)
-    .responseType(ResponseType.ARRAYBUFFER)
-    .get();
+    const buffer = await client
+      .api(`/shares/${shareId}/driveItem/content`)
+      .responseType(ResponseType.ARRAYBUFFER)
+      .get();
 
+    return { buffer, mimeType };
+  } catch (graphErr) {
+    console.warn('[pdf proxy] Graph API failed, falling back to direct fetch:', graphErr);
+  }
+
+  // Fallback: direct fetch — works when sharing link is "Anyone with the link can view"
+  const downloadUrl = sharingUrl.includes('?')
+    ? `${sharingUrl}&download=1`
+    : `${sharingUrl}?download=1`;
+
+  const res = await fetch(downloadUrl, { redirect: 'follow' });
+  if (!res.ok) {
+    throw new Error(
+      `Document unavailable (${res.status}). Ensure the OneDrive link is set to "Anyone with the link can view".`
+    );
+  }
+
+  const mimeType = res.headers.get('content-type')?.split(';')[0] || 'application/pdf';
+  const buffer = await res.arrayBuffer();
   return { buffer, mimeType };
 }
 
