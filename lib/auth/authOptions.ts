@@ -62,7 +62,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const isAdmin = ADMIN_EMAILS.includes(user.email.toLowerCase());
 
         if (existingEmployee) {
-          // Update existing employee; promote to admin if email is in ADMIN_EMAILS
+          // Update profile fields only — role is managed via the admin portal, not overridden here
           await supabase
             .from('employees')
             .update({
@@ -71,12 +71,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               department: profile?.department || null,
               job_title: profile?.jobTitle || null,
               avatar_url: user.image || null,
-              ...(isAdmin ? { role: 'admin' } : {}),
               updated_at: new Date().toISOString(),
             })
             .eq('azure_oid', azureOid);
         } else {
-          // Create new employee with role based on ADMIN_EMAILS
+          // Bootstrap role on first sign-in: ADMIN_EMAILS seeds the initial admin, DB manages it after that
           await supabase.from('employees').insert({
             azure_oid: azureOid,
             email: user.email,
