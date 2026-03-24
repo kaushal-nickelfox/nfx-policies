@@ -1,4 +1,4 @@
-import { Client } from '@microsoft/microsoft-graph-client';
+import { Client, ResponseType } from '@microsoft/microsoft-graph-client';
 import type { MicrosoftProfile } from '@/types/index';
 
 function getAppOnlyClient(): Client {
@@ -64,13 +64,28 @@ export async function getDocumentStream(fileUrl: string): Promise<Buffer> {
   }
 }
 
+export async function downloadDocumentAppOnly(
+  sharingUrl: string
+): Promise<{ buffer: ArrayBuffer; mimeType: string }> {
+  const client = getAppOnlyClient();
+  const encodedUrl = Buffer.from(sharingUrl).toString('base64');
+  const shareId = `u!${encodedUrl.replace(/=/g, '').replace(/\//g, '_').replace(/\+/g, '-')}`;
+
+  const item = await client.api(`/shares/${shareId}/driveItem`).select('name,file').get();
+  const mimeType = (item?.file?.mimeType as string) || 'application/pdf';
+
+  const buffer = await client
+    .api(`/shares/${shareId}/driveItem/content`)
+    .responseType(ResponseType.ARRAYBUFFER)
+    .get();
+
+  return { buffer, mimeType };
+}
+
 export async function getUserProfile(accessToken: string): Promise<MicrosoftProfile> {
   const client = getDelegatedClient(accessToken);
 
-  const profile = await client
-    .api('/me')
-    .select('id,displayName,mail,department,jobTitle')
-    .get();
+  const profile = await client.api('/me').select('id,displayName,mail,department,jobTitle').get();
 
   return {
     id: profile.id,

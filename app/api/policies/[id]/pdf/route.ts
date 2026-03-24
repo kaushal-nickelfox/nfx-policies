@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/authOptions';
 import { createServiceClient } from '@/lib/supabase/server';
-import { downloadFromSharingUrl } from '@/lib/onedrive/storage';
+import { downloadDocumentAppOnly } from '@/lib/graph/graphClient';
 
 // GET /api/policies/[id]/pdf
 // Downloads the file from SharePoint via Graph API (avoids CORS + HTML redirect issues)
@@ -22,8 +22,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   if (!policy.document_url) return new NextResponse('No document available', { status: 404 });
 
   try {
-    const accessToken = session.accessToken as string;
-    const { buffer, mimeType } = await downloadFromSharingUrl(policy.document_url, accessToken);
+    const { buffer, mimeType } = await downloadDocumentAppOnly(policy.document_url);
 
     const ext = policy.document_type === 'docx' ? 'docx' : 'pdf';
     const fileName = `${policy.title.replace(/[^a-z0-9]/gi, '_')}.${ext}`;
