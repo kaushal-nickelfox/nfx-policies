@@ -12,7 +12,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       issuer: `https://login.microsoftonline.com/${process.env.AUTH_MICROSOFT_ENTRA_ID_TENANT_ID || 'common'}/v2.0`,
       authorization: {
         params: {
-          scope: 'openid profile email User.Read',
+          scope: 'openid profile email User.Read Files.Read',
         },
       },
     }),
