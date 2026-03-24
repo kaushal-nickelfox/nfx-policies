@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @source "../app/**/*.{ts,tsx}";
 @source "../components/**/*.{ts,tsx}";
@@ -26,13 +26,47 @@
   --radius: 0.5rem;
   --sidebar-width: 256px;
   --header-height: 64px;
+
+  /* Theme tokens used by components */
+  --page-bg: #f9fafb;
+  --card-bg: #ffffff;
+  --card-border: #e2e8f0;
+  --card-border-inner: #f1f5f9;
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --text-muted: #9ca3af;
+  --hover-bg: #fafafa;
+  --input-bg: #ffffff;
+  --badge-bg: #f1f5f9;
+  --badge-color: #475569;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+[data-theme='dark'] {
+  --background: #0f172a;
+  --foreground: #f1f5f9;
+  --secondary: #1e293b;
+  --secondary-foreground: #f1f5f9;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #1e293b;
+  --accent-foreground: #f1f5f9;
+  --border: #334155;
+  --input: #334155;
+
+  /* Theme tokens */
+  --page-bg: #0f172a;
+  --card-bg: #1e293b;
+  --card-border: #334155;
+  --card-border-inner: #273549;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --hover-bg: #273549;
+  --input-bg: #0f172a;
+  --badge-bg: #273549;
+  --badge-color: #94a3b8;
+
+  color-scheme: dark;
 }
 
 * {
