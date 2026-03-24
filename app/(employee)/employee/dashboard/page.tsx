@@ -4,6 +4,7 @@ import { usePolicies } from '@/hooks/usePolicies';
 import { usePolicyStore } from '@/store/usePolicyStore';
 import { useUIStore } from '@/store/useUIStore';
 import { useSession, signOut } from 'next-auth/react';
+import { useQueryClient } from '@tanstack/react-query';
 import Modal from '@/components/ui/Modal';
 import DocumentViewer from '@/components/viewer/DocumentViewer';
 import { FullPageSpinner } from '@/components/ui/Spinner';
@@ -46,7 +47,8 @@ const categoryIcon = (cat: string) => {
 
 export default function EmployeeDashboardPage() {
   const { data: session } = useSession();
-  const { data: policies, isLoading, refetch } = usePolicies();
+  const { data: policies, isLoading } = usePolicies();
+  const queryClient = useQueryClient();
   const { setPolicies, setSelectedCategory, selectedCategory, getFilteredPolicies } =
     usePolicyStore();
   const { isViewerOpen, openViewer, closeViewer } = useUIStore();
@@ -523,8 +525,20 @@ export default function EmployeeDashboardPage() {
           policy={viewerPolicy}
           onClose={closeViewer}
           onAcknowledged={() => {
+            const policyId = viewerPolicy.id;
             closeViewer();
-            refetch();
+            // Optimistic update: immediately mark as acknowledged in the store
+            if (policies) {
+              setPolicies(
+                policies.map((p) =>
+                  p.id === policyId
+                    ? { ...p, is_acknowledged: true, acknowledged_at: new Date().toISOString() }
+                    : p
+                )
+              );
+            }
+            // Also invalidate the server cache to sync fresh data
+            queryClient.invalidateQueries({ queryKey: ['policies'] });
           }}
         />
       )}
