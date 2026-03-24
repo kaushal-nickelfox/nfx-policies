@@ -29,7 +29,7 @@
     "mammoth": "^1.8.0",
     "next": "^16.2.1",
     "next-auth": "^5.0.0-beta.25",
-    "pdfjs-dist": "^4.4.168",
+    "pdfjs-dist": "3.11.174",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.53.0",

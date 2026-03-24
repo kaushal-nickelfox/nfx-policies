@@ -671,10 +671,7 @@ export default function AdminPoliciesPage() {
             </div>
 
             {/* Form */}
-            <form
-              onSubmit={handleSubmit(onSubmit)}
-              style={{ display: 'flex', flexDirection: 'column', gap: 16 }}
-            >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               {/* Title */}
               <div>
                 <label style={labelStyle}>Policy Title *</label>
@@ -785,7 +782,8 @@ export default function AdminPoliciesPage() {
                   Cancel
                 </button>
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={handleSubmit(onSubmit)}
                   disabled={isSubmitting}
                   style={{
                     padding: '10px 22px',
@@ -801,7 +799,7 @@ export default function AdminPoliciesPage() {
                   {isSubmitting ? 'Saving...' : editPolicy ? 'Save Changes' : 'Create Policy'}
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}

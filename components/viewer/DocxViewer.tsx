@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import DOMPurify from 'dompurify';
+import { useQuery } from '@tanstack/react-query';
 import { FullPageSpinner } from '@/components/ui/Spinner';
 
 interface DocxViewerProps {
@@ -8,42 +9,38 @@ interface DocxViewerProps {
 }
 
 export default function DocxViewer({ policyId }: DocxViewerProps) {
-  const [html, setHtml] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    async function fetchHtml() {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const res = await fetch(`/api/policies/${policyId}/html`);
-        if (!res.ok) throw new Error('Failed to load document');
-        const data = await res.json();
-        setHtml(data.html);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : 'Failed to load document');
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchHtml();
-  }, [policyId]);
+  const { data, isLoading, error } = useQuery<{ html: string }>({
+    queryKey: ['docx-html', policyId],
+    queryFn: async () => {
+      const res = await fetch(`/api/policies/${policyId}/html`);
+      if (!res.ok) throw new Error('Failed to load document');
+      return res.json();
+    },
+  });
 
   if (isLoading) return <FullPageSpinner />;
   if (error)
     return (
-      <div className="flex h-full items-center justify-center text-red-500">
-        <p>Error: {error}</p>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
+          color: '#EF4444',
+        }}
+      >
+        <p>Error: {error instanceof Error ? error.message : 'Failed to load document'}</p>
       </div>
     );
-  if (!html) return null;
+  if (!data?.html) return null;
+
+  const safeHtml = DOMPurify.sanitize(data.html);
 
   return (
     <div
       className="prose prose-slate max-w-none p-6"
-      dangerouslySetInnerHTML={{ __html: html }}
+      dangerouslySetInnerHTML={{ __html: safeHtml }}
     />
   );
 }

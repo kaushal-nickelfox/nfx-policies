@@ -71,7 +71,7 @@ export default function AcknowledgeButton({
       </Button>
 
       <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Acknowledge Policy">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-4">
           <p className="text-sm text-slate-600">
             You are about to acknowledge that you have read and understood:
           </p>
@@ -93,9 +93,7 @@ export default function AcknowledgeButton({
               I confirm that I have read and understood the above policy in full.
             </span>
           </label>
-          {errors.confirmed && (
-            <p className="text-sm text-red-600">{errors.confirmed.message}</p>
-          )}
+          {errors.confirmed && <p className="text-sm text-red-600">{errors.confirmed.message}</p>}
 
           {error && <p className="text-sm text-red-600">{error}</p>}
 
@@ -103,11 +101,11 @@ export default function AcknowledgeButton({
             <Button variant="outline" type="button" onClick={() => setIsOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit" isLoading={isSubmitting}>
+            <Button type="button" onClick={handleSubmit(onSubmit)} isLoading={isSubmitting}>
               Confirm Acknowledgement
             </Button>
           </div>
-        </form>
+        </div>
       </Modal>
     </>
   );
