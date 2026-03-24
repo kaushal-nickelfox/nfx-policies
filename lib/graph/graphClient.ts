@@ -5,11 +5,25 @@ function getAppOnlyClient(): Client {
   return Client.init({
     authProvider: async (done) => {
       try {
-        const tokenEndpoint = `https://login.microsoftonline.com/${process.env.MICROSOFT_GRAPH_TENANT_ID}/oauth2/v2.0/token`;
+        const tenantId = process.env.MICROSOFT_GRAPH_TENANT_ID;
+        const clientId = process.env.MICROSOFT_GRAPH_CLIENT_ID;
+        const clientSecret = process.env.MICROSOFT_GRAPH_CLIENT_SECRET;
+
+        if (!tenantId || !clientId || !clientSecret) {
+          done(
+            new Error(
+              'Missing MICROSOFT_GRAPH_TENANT_ID / MICROSOFT_GRAPH_CLIENT_ID / MICROSOFT_GRAPH_CLIENT_SECRET env vars'
+            ),
+            null
+          );
+          return;
+        }
+
+        const tokenEndpoint = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`;
 
         const params = new URLSearchParams({
-          client_id: process.env.MICROSOFT_GRAPH_CLIENT_ID!,
-          client_secret: process.env.MICROSOFT_GRAPH_CLIENT_SECRET!,
+          client_id: clientId,
+          client_secret: clientSecret,
           scope: 'https://graph.microsoft.com/.default',
           grant_type: 'client_credentials',
         });
@@ -21,6 +35,17 @@ function getAppOnlyClient(): Client {
         });
 
         const data = await response.json();
+
+        if (!response.ok || !data.access_token) {
+          done(
+            new Error(
+              `App-only token fetch failed: ${data.error} — ${data.error_description ?? 'no description'}`
+            ),
+            null
+          );
+          return;
+        }
+
         done(null, data.access_token);
       } catch (error) {
         done(error as Error, null);
