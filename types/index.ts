@@ -76,9 +76,12 @@ export interface AdminStats {
   total_employees: number;
   total_policies: number;
   total_acknowledgements: number;
+  fully_acknowledged_employees: number;
+  pending_employees: number;
   overall_completion_percent: number;
   policy_completion: PolicyCompletion[];
   dept_completion: DeptCompletion[];
+  recent_activity: RecentActivity[];
 }
 
 export interface PolicyCompletion {

@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/authOptions';
 import { createServiceClient } from '@/lib/supabase/server';
-import { listPoliciesFromOneDrive } from '@/lib/onedrive/storage';
 import { calcPercent } from '@/utils/helpers';
 import type { AdminStats, EmployeeWithStats } from '@/types/index';
 
-// GET /api/employees - admin stats + employee list with ack data
+// GET /api/employees - admin stats + employee list with ack data (admin only)
 export async function GET() {
   const session = await auth();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -14,24 +13,22 @@ export async function GET() {
 
   const supabase = createServiceClient();
 
-  // Fetch all data in parallel
-  const accessToken = session.accessToken as string;
-
-  const [empResult, policies, ackResult] = await Promise.all([
+  const [empResult, policiesResult, ackResult] = await Promise.all([
     supabase.from('employees').select('*').order('name'),
-    listPoliciesFromOneDrive(accessToken),
-    supabase.from('acknowledgements').select('*'),
+    supabase.from('policies').select('id, title').eq('is_active', true),
+    supabase.from('acknowledgements').select('*').order('acknowledged_at', { ascending: false }),
   ]);
 
   const employees = empResult.data || [];
+  const policies = policiesResult.data || [];
   const acks = ackResult.data || [];
 
   const totalEmployees = employees.length;
   const totalPolicies = policies.length;
   const totalAcks = acks.length;
 
-  // Calculate policy completion
-  const policyCompletion = policies.map((p: { id: string; title: string }) => {
+  // Per-policy completion
+  const policyCompletion = policies.map((p) => {
     const ackCount = acks.filter((a) => a.policy_id === p.id).length;
     return {
       policy_id: p.id,
@@ -42,7 +39,7 @@ export async function GET() {
     };
   });
 
-  // Calculate dept completion
+  // Per-dept completion
   const departments = [...new Set(employees.map((e) => e.department || 'Unknown'))];
   const deptCompletion = departments.map((dept) => {
     const deptEmployees = employees.filter((e) => (e.department || 'Unknown') === dept);
@@ -56,22 +53,19 @@ export async function GET() {
     };
   });
 
-  // Recent activity (last 10)
-  const recentActivity = acks
-    .sort((a, b) => new Date(b.acknowledged_at).getTime() - new Date(a.acknowledged_at).getTime())
-    .slice(0, 10)
-    .map((ack) => {
-      const emp = employees.find((e) => e.id === ack.employee_id);
-      const pol = policies.find((p) => p.id === ack.policy_id);
-      return {
-        employee_name: emp?.name || 'Unknown',
-        employee_email: emp?.email || '',
-        policy_title: pol?.title || 'Unknown',
-        acknowledged_at: ack.acknowledged_at,
-      };
-    });
+  // Recent activity — last 10 acknowledgements
+  const recentActivity = acks.slice(0, 10).map((ack) => {
+    const emp = employees.find((e) => e.id === ack.employee_id);
+    const pol = policies.find((p) => p.id === ack.policy_id);
+    return {
+      employee_name: emp?.name || 'Unknown',
+      employee_email: emp?.email || '',
+      policy_title: pol?.title || 'Unknown',
+      acknowledged_at: ack.acknowledged_at,
+    };
+  });
 
-  // Build employees with stats
+  // Employees with per-person stats
   const employeesWithStats: EmployeeWithStats[] = employees.map((emp) => {
     const empAcks = acks.filter((a) => a.employee_id === emp.id);
     return {
@@ -83,17 +77,24 @@ export async function GET() {
     };
   });
 
-  const overallCompletion = calcPercent(totalAcks, totalEmployees * totalPolicies);
+  // Derived counts for stat cards
+  const fullyAcknowledgedEmployees = employeesWithStats.filter(
+    (e) => totalPolicies > 0 && e.acks_count >= totalPolicies
+  ).length;
+  const pendingEmployees = totalEmployees - fullyAcknowledgedEmployees;
 
-  const stats: AdminStats & { employees: EmployeeWithStats[] } = {
+  const result: AdminStats & { employees: EmployeeWithStats[] } = {
     total_employees: totalEmployees,
     total_policies: totalPolicies,
     total_acknowledgements: totalAcks,
-    overall_completion_percent: overallCompletion,
+    fully_acknowledged_employees: fullyAcknowledgedEmployees,
+    pending_employees: pendingEmployees,
+    overall_completion_percent: calcPercent(totalAcks, totalEmployees * totalPolicies),
     policy_completion: policyCompletion,
     dept_completion: deptCompletion,
+    recent_activity: recentActivity,
     employees: employeesWithStats,
   };
 
-  return NextResponse.json(stats);
+  return NextResponse.json(result);
 }
