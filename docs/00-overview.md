@@ -2,31 +2,37 @@
 
 ## Purpose
 
-Internal application for managing and tracking employee engagement with company policies and documents stored in Microsoft SharePoint/OneDrive. Employees log in with their org Microsoft account, read documents in a secure viewer, and acknowledge they have read each one. All activity is audit-logged in Supabase.
+Enterprise HR Policy Acknowledgement System where employees authenticate via Microsoft (Azure AD), read company HR policy documents (PDF/DOCX stored in SharePoint/OneDrive), and formally acknowledge them. Admins track acknowledgement status across the organization with analytics and PDF reports. All activity is audit-logged in Supabase.
 
 ---
 
+## Deployment
+
+- **Target**: Vercel (Frontend + API) + Supabase Cloud (Database)
+- **Auth Provider**: Microsoft Entra ID (Azure AD) via NextAuth.js v5
+- **Document Storage**: Microsoft SharePoint / OneDrive via Microsoft Graph API
+
 ## Tech Stack
 
-| Concern | Package | Version |
-|---|---|---|
-| Framework | `next` | 15.x |
-| Language | `typescript` | 5.x (strict) |
-| Auth | `next-auth` | ^5.0.0 |
-| Microsoft Graph | `@microsoft/microsoft-graph-client` | ^3.0.7 |
-| Database | `@supabase/supabase-js` + `@supabase/ssr` | ^2.x / ^0.5.x |
-| PDF Viewer | `@react-pdf-viewer/core` + `pdfjs-dist` | ^3.12 / ^4.x |
-| DOCX Viewer | `mammoth` | ^1.8.0 |
-| HTML Sanitization | `dompurify` + `@types/dompurify` | ^3.x |
-| Client State | `zustand` | ^5.0.0 |
-| Server State | `@tanstack/react-query` | ^5.0.0 |
-| Forms | `react-hook-form` + `@hookform/resolvers` | ^7.x / ^5.x |
-| Validation | `zod` | ^4.0.0 |
-| Styling | `tailwindcss` + `@tailwindcss/postcss` | ^4.x |
-| Linting | `eslint` + `eslint-config-next` | ^9.x |
-| Formatting | `prettier` + `prettier-plugin-tailwindcss` | ^3.x |
-| Commit hooks | `husky` + `lint-staged` | ^9.x / ^15.x |
-| Commit lint | `@commitlint/cli` + `@commitlint/config-conventional` | ^19.x |
+| Concern           | Package                                               | Version       |
+| ----------------- | ----------------------------------------------------- | ------------- |
+| Framework         | `next`                                                | 15.x          |
+| Language          | `typescript`                                          | 5.x (strict)  |
+| Auth              | `next-auth`                                           | ^5.0.0        |
+| Microsoft Graph   | `@microsoft/microsoft-graph-client`                   | ^3.0.7        |
+| Database          | `@supabase/supabase-js` + `@supabase/ssr`             | ^2.x / ^0.5.x |
+| PDF Viewer        | `@react-pdf-viewer/core` + `pdfjs-dist`               | ^3.12 / ^4.x  |
+| DOCX Viewer       | `mammoth`                                             | ^1.8.0        |
+| HTML Sanitization | `dompurify` + `@types/dompurify`                      | ^3.x          |
+| Client State      | `zustand`                                             | ^5.0.0        |
+| Server State      | `@tanstack/react-query`                               | ^5.0.0        |
+| Forms             | `react-hook-form` + `@hookform/resolvers`             | ^7.x / ^5.x   |
+| Validation        | `zod`                                                 | ^4.0.0        |
+| Styling           | `tailwindcss` + `@tailwindcss/postcss`                | ^4.x          |
+| Linting           | `eslint` + `eslint-config-next`                       | ^9.x          |
+| Formatting        | `prettier` + `prettier-plugin-tailwindcss`            | ^3.x          |
+| Commit hooks      | `husky` + `lint-staged`                               | ^9.x / ^15.x  |
+| Commit lint       | `@commitlint/cli` + `@commitlint/config-conventional` | ^19.x         |
 
 ---
 
@@ -35,94 +41,135 @@ Internal application for managing and tracking employee engagement with company 
 ```
 nfx-policies/
 ├── app/
-│   ├── (auth)/
-│   │   ├── login/page.tsx              # Microsoft SSO login screen
-│   │   └── layout.tsx                  # Unauthenticated shell (centered card)
-│   ├── (dashboard)/
-│   │   ├── layout.tsx                  # Authenticated shell — AppShell wraps all dashboard pages
-│   │   ├── page.tsx                    # Redirects to /policies
-│   │   └── policies/
-│   │       ├── page.tsx                # Policy list
-│   │       └── [id]/page.tsx           # Document viewer
-│   ├── api/
-│   │   ├── auth/[...nextauth]/route.ts
-│   │   ├── policies/route.ts
-│   │   ├── policies/[id]/route.ts
-│   │   ├── policies/[id]/html/route.ts
-│   │   ├── read-events/route.ts
-│   │   └── acknowledgements/route.ts
 │   ├── globals.css
-│   └── layout.tsx
-│
-├── features/
-│   ├── auth/
-│   │   ├── components/LoginButton.tsx
-│   │   ├── components/SessionGuard.tsx
-│   │   └── hooks/useSession.ts
-│   └── policies/
-│       ├── components/
-│       │   ├── PolicyList.tsx
-│       │   ├── PolicyCard.tsx
-│       │   ├── PolicyViewer.tsx
-│       │   ├── PdfViewer.tsx
-│       │   ├── DocxViewer.tsx
-│       │   ├── AcknowledgementBanner.tsx
-│       │   └── ReadBadge.tsx
-│       ├── hooks/
-│       │   ├── usePolicies.ts
-│       │   ├── useAcknowledgements.ts
-│       │   └── usePolicyViewer.ts
-│       ├── queries/
-│       │   ├── policyQueries.ts
-│       │   └── acknowledgementQueries.ts
-│       ├── mutations/
-│       │   ├── useLogReadEvent.ts
-│       │   └── useAcknowledge.ts
-│       ├── store/policyStore.ts
-│       └── validators/policySchema.ts
-│
-├── services/
-│   ├── graph/
-│   │   ├── graphClient.ts
-│   │   ├── filesService.ts
-│   │   └── tokenProvider.ts
-│   └── supabase/
-│       ├── client.ts
-│       ├── server.ts
-│       └── middleware.ts
-│
+│   ├── layout.tsx
+│   ├── page.tsx
+│   ├── (admin)/
+│   │   ├── layout.tsx
+│   │   └── admin/
+│   │       ├── dashboard/
+│   │       │   └── page.tsx
+│   │       ├── employees/
+│   │       │   └── page.tsx
+│   │       ├── policies/
+│   │       │   └── page.tsx
+│   │       └── reports/
+│   │           └── page.tsx
+│   ├── (auth)/
+│   │   └── login/
+│   │       └── page.tsx
+│   ├── (employee)/
+│   │   ├── layout.tsx
+│   │   └── employee/
+│   │       ├── acknowledgements/
+│   │       │   └── page.tsx
+│   │       ├── dashboard/
+│   │       │   └── page.tsx
+│   │       ├── policy/
+│   │       │   └── [id]/
+│   │       │       └── page.tsx
+│   │       ├── settings/
+│   │       │   └── page.tsx
+│   │       └── team/
+│   │           └── page.tsx
+│   └── api/
+│       ├── acknowledge/
+│       │   └── route.ts
+│       ├── admin/
+│       │   └── policies/
+│       │       └── route.ts
+│       ├── auth/
+│       │   └── [...nextauth]/
+│       │       └── route.ts
+│       ├── employees/
+│       │   └── route.ts
+│       ├── graph/
+│       │   └── document/
+│       │       └── route.ts
+│       └── policies/
+│           └── route.ts
 ├── components/
+│   ├── admin/
+│   │   ├── AckTable.tsx
+│   │   ├── CompletionBarChart.tsx
+│   │   ├── DeptPieChart.tsx
+│   │   ├── RecentActivityFeed.tsx
+│   │   └── StatsCards.tsx
+│   ├── auth/
+│   │   └── MicrosoftLoginButton.tsx
+│   ├── employee/
+│   │   ├── AcknowledgeButton.tsx
+│   │   ├── PolicyCard.tsx
+│   │   ├── PolicyGrid.tsx
+│   │   └── ProgressSummary.tsx
 │   ├── layout/
-│   │   ├── AppShell.tsx
-│   │   ├── Sidebar.tsx
-│   │   └── Topbar.tsx
-│   └── ui/
-│       ├── Button.tsx
-│       ├── Badge.tsx
-│       ├── Card.tsx
-│       ├── Modal.tsx
-│       ├── EmptyState.tsx
-│       └── LoadingSpinner.tsx
-│
+│   │   ├── AdminSidebar.tsx
+│   │   ├── EmployeeSidebar.tsx
+│   │   └── Header.tsx
+│   ├── pdf/
+│   │   └── ExportReportButton.tsx
+│   ├── ui/
+│   │   ├── Avatar.tsx
+│   │   ├── Badge.tsx
+│   │   ├── Button.tsx
+│   │   ├── Card.tsx
+│   │   ├── Modal.tsx
+│   │   ├── ProgressBar.tsx
+│   │   ├── Spinner.tsx
+│   │   └── Toast.tsx
+│   └── viewer/
+│       ├── DocumentViewer.tsx
+│       ├── DocxViewer.tsx
+│       └── PDFViewer.tsx
+├── docs/
+│   ├── 00-overview.md
+│   ├── 01-project-setup.md
+│   ├── 02-design-tokens.md
+│   ├── 03-auth.md
+│   ├── 04-database.md
+│   ├── 05-graph-integration.md
+│   ├── 06-api-routes.md
+│   ├── 07-ui-components.md
+│   ├── 08-policy-feature.md
+│   ├── 09-state-and-queries.md
+│   └── 10-deployment.md
+├── hooks/
+│   ├── useAcknowledgements.ts
+│   ├── useEmployeeStats.ts
+│   ├── useGraphDocument.ts
+│   ├── useIsMobile.ts
+│   └── usePolicies.ts
 ├── lib/
-│   ├── auth.ts
-│   ├── env.ts
-│   ├── queryClient.ts
-│   └── constants.ts
-│
-├── middleware.ts
-│
+│   ├── auth/
+│   │   └── authOptions.ts
+│   ├── graph/
+│   │   └── graphClient.ts
+│   ├── pdf/
+│   │   └── generateReport.ts
+│   ├── supabase/
+│   │   ├── client.ts
+│   │   └── server.ts
+│   └── validations/
+│       ├── acknowledgeSchema.ts
+│       └── policySchema.ts
+├── providers/
+│   └── Providers.tsx
+├── store/
+│   ├── usePolicyStore.ts
+│   ├── useUIStore.ts
+│   └── useUserStore.ts
 ├── types/
-│   ├── policy.ts
-│   ├── user.ts
+│   ├── index.ts
 │   └── next-auth.d.ts
-│
 ├── utils/
-│   ├── fileUtils.ts
-│   └── dateUtils.ts
-│
-├── docs/                               # This folder — agent task docs
-├── .env.example
+│   └── helpers.ts
+├── commitlint.config.js
+├── middleware.ts
+├── next-env.d.ts
+├── next.config.ts
+├── package.json
+├── postcss.config.mjs
+├── tailwind.config.ts
 └── tsconfig.json
 ```
 
@@ -143,15 +190,15 @@ nfx-policies/
 
 ## State Management Guide
 
-| What | Where | Why |
-|---|---|---|
-| Policy list from API | TanStack Query (`usePolicies`) | Cacheable, background refetch |
-| User ack status | TanStack Query (`useAcknowledgements`) | Cacheable |
-| Submit acknowledgement | TanStack Mutation (`useAcknowledge`) | Invalidates ack cache on success |
-| Log read event | TanStack Mutation (`useLogReadEvent`) | Fire-and-forget mutation |
-| Viewer open/closed | Zustand (`policyStore`) | UI-only, no server sync needed |
-| Selected document | Zustand (`policyStore`) | UI-only |
-| Sidebar collapsed | Zustand or local state | UI-only |
+| What                   | Where                                  | Why                              |
+| ---------------------- | -------------------------------------- | -------------------------------- |
+| Policy list from API   | TanStack Query (`usePolicies`)         | Cacheable, background refetch    |
+| User ack status        | TanStack Query (`useAcknowledgements`) | Cacheable                        |
+| Submit acknowledgement | TanStack Mutation (`useAcknowledge`)   | Invalidates ack cache on success |
+| Log read event         | TanStack Mutation (`useLogReadEvent`)  | Fire-and-forget mutation         |
+| Viewer open/closed     | Zustand (`policyStore`)                | UI-only, no server sync needed   |
+| Selected document      | Zustand (`policyStore`)                | UI-only                          |
+| Sidebar collapsed      | Zustand or local state                 | UI-only                          |
 
 ---
 

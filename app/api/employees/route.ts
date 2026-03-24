@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/authOptions';
 import { createServiceClient } from '@/lib/supabase/server';
+import { listPoliciesFromOneDrive } from '@/lib/onedrive/storage';
 import { calcPercent } from '@/utils/helpers';
 import type { AdminStats, EmployeeWithStats } from '@/types/index';
 
@@ -8,19 +9,21 @@ import type { AdminStats, EmployeeWithStats } from '@/types/index';
 export async function GET() {
   const session = await auth();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (session.user.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (session.user.role !== 'admin')
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const supabase = createServiceClient();
 
   // Fetch all data in parallel
-  const [empResult, polResult, ackResult] = await Promise.all([
+  const accessToken = session.accessToken as string;
+
+  const [empResult, policies, ackResult] = await Promise.all([
     supabase.from('employees').select('*').order('name'),
-    supabase.from('policies').select('*').eq('is_active', true).eq('requires_acknowledgement', true),
+    listPoliciesFromOneDrive(accessToken),
     supabase.from('acknowledgements').select('*'),
   ]);
 
   const employees = empResult.data || [];
-  const policies = polResult.data || [];
   const acks = ackResult.data || [];
 
   const totalEmployees = employees.length;
@@ -28,7 +31,7 @@ export async function GET() {
   const totalAcks = acks.length;
 
   // Calculate policy completion
-  const policyCompletion = policies.map((p) => {
+  const policyCompletion = policies.map((p: { id: string; title: string }) => {
     const ackCount = acks.filter((a) => a.policy_id === p.id).length;
     return {
       policy_id: p.id,
@@ -43,9 +46,7 @@ export async function GET() {
   const departments = [...new Set(employees.map((e) => e.department || 'Unknown'))];
   const deptCompletion = departments.map((dept) => {
     const deptEmployees = employees.filter((e) => (e.department || 'Unknown') === dept);
-    const deptAcks = acks.filter((a) =>
-      deptEmployees.some((e) => e.id === a.employee_id)
-    );
+    const deptAcks = acks.filter((a) => deptEmployees.some((e) => e.id === a.employee_id));
     const maxPossible = deptEmployees.length * totalPolicies;
     return {
       department: dept,
