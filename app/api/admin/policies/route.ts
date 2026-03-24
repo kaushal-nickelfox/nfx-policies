@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/authOptions';
 import { createServiceClient } from '@/lib/supabase/server';
-import { listPoliciesFromOneDrive } from '@/lib/onedrive/storage';
 
-// GET /api/admin/policies - all policies from OneDrive with ack stats (admin only)
+// GET /api/admin/policies - all policies from Supabase with ack stats (admin only)
 export async function GET() {
   const session = await auth();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -11,13 +10,14 @@ export async function GET() {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const supabase = createServiceClient();
-  const accessToken = session.accessToken as string;
 
-  const [policies, { data: employees }, { data: acks }] = await Promise.all([
-    listPoliciesFromOneDrive(accessToken),
+  const [{ data: policies, error }, { data: employees }, { data: acks }] = await Promise.all([
+    supabase.from('policies').select('*').order('created_at', { ascending: false }),
     supabase.from('employees').select('id').eq('role', 'employee'),
     supabase.from('acknowledgements').select('policy_id'),
   ]);
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   const totalEmployees = (employees ?? []).length;
 
@@ -26,7 +26,7 @@ export async function GET() {
     ackCountMap.set(a.policy_id, (ackCountMap.get(a.policy_id) ?? 0) + 1);
   }
 
-  const result = policies.map((p) => ({
+  const result = (policies ?? []).map((p) => ({
     ...p,
     ack_count: ackCountMap.get(p.id) ?? 0,
     total_employees: totalEmployees,

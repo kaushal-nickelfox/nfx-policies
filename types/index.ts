@@ -28,11 +28,6 @@ export interface Policy {
   created_by: string | null;
   created_at: string;
   updated_at: string;
-  effective_date: string | null;
-  expiry_date: string | null;
-  assigned_to: 'all' | 'department';
-  assigned_departments: string[] | null;
-  storage_path: string | null;
 }
 
 export interface Acknowledgement {

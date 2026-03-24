@@ -1,4 +1,4 @@
-import { Client } from '@microsoft/microsoft-graph-client';
+import { Client, ResponseType } from '@microsoft/microsoft-graph-client';
 
 /** Build a Graph client using the signed-in user's delegated access token */
 function getDelegatedClient(accessToken: string): Client {
@@ -144,6 +144,31 @@ export async function getSignedDownloadUrl(
   const downloadUrl = item['@microsoft.graph.downloadUrl'] as string | undefined;
   if (!downloadUrl) throw new Error('Could not get download URL from OneDrive');
   return downloadUrl;
+}
+
+/**
+ * Download file bytes from a SharePoint/OneDrive sharing URL via Graph API.
+ * Works for "Anyone with the link" sharing URLs stored in document_url.
+ */
+export async function downloadFromSharingUrl(
+  sharingUrl: string,
+  accessToken: string
+): Promise<{ buffer: ArrayBuffer; mimeType: string }> {
+  const client = getDelegatedClient(accessToken);
+  const shareId = getShareId(sharingUrl);
+
+  // Get the driveItem metadata to read the MIME type
+  const item = await client.api(`/shares/${shareId}/driveItem`).select('name,file').get();
+
+  const mimeType = (item?.file?.mimeType as string) || 'application/pdf';
+
+  // Download the raw file bytes
+  const buffer = await client
+    .api(`/shares/${shareId}/driveItem/content`)
+    .responseType(ResponseType.ARRAYBUFFER)
+    .get();
+
+  return { buffer, mimeType };
 }
 
 /** Delete a file from OneDrive. */

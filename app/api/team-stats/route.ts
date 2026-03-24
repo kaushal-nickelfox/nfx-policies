@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/authOptions';
 import { createServiceClient } from '@/lib/supabase/server';
-import { listPoliciesFromOneDrive } from '@/lib/onedrive/storage';
 import { calcPercent } from '@/utils/helpers';
 
 // GET /api/team-stats - aggregate team progress (accessible by all authenticated users)
@@ -10,21 +9,21 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const supabase = createServiceClient();
-  const accessToken = session.accessToken as string;
 
-  const [empResult, policies, ackResult] = await Promise.all([
+  const [empResult, policiesResult, ackResult] = await Promise.all([
     supabase.from('employees').select('id, department'),
-    listPoliciesFromOneDrive(accessToken),
+    supabase.from('policies').select('id, title').eq('is_active', true),
     supabase.from('acknowledgements').select('employee_id, policy_id'),
   ]);
 
   const employees = empResult.data || [];
+  const policies = policiesResult.data || [];
   const acks = ackResult.data || [];
   const totalEmployees = employees.length;
   const totalPolicies = policies.length;
   const totalAcks = acks.length;
 
-  const policyCompletion = policies.map((p: { id: string; title: string }) => {
+  const policyCompletion = policies.map((p) => {
     const ackCount = acks.filter((a) => a.policy_id === p.id).length;
     return {
       policy_id: p.id,

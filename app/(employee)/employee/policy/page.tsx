@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { usePolicies } from '@/hooks/usePolicies';
 import Modal from '@/components/ui/Modal';
 import { FullPageSpinner } from '@/components/ui/Spinner';
@@ -19,7 +20,6 @@ import {
   Hash,
   Calendar,
   Filter,
-  AlertTriangle,
 } from 'lucide-react';
 import type { PolicyCategory, PolicyWithStatus } from '@/types/index';
 
@@ -64,7 +64,8 @@ const categoryAccent: Record<string, string> = {
 };
 
 export default function PolicyListPage() {
-  const { data: policies, isLoading, refetch } = usePolicies();
+  const { data: policies, isLoading } = usePolicies();
+  const queryClient = useQueryClient();
   const [activeCategory, setActiveCategory] = useState<PolicyCategory | 'All'>('All');
   const [search, setSearch] = useState('');
   const [viewerPolicy, setViewerPolicy] = useState<PolicyWithStatus | null>(null);
@@ -368,32 +369,6 @@ export default function PolicyListPage() {
                     })}
                   </span>
                 )}
-                {policy.expiry_date &&
-                  (() => {
-                    const isOverdue = new Date(policy.expiry_date) < new Date();
-                    const isNear =
-                      !isOverdue &&
-                      new Date(policy.expiry_date).getTime() - Date.now() < 7 * 86400000;
-                    const color = isOverdue ? '#EF4444' : isNear ? '#F59E0B' : '#6B7280';
-                    const IconComp = isOverdue ? AlertTriangle : Clock;
-                    return (
-                      <span
-                        style={{
-                          fontSize: 11,
-                          color,
-                          fontWeight: isOverdue || isNear ? 700 : 400,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 3,
-                        }}
-                      >
-                        <IconComp size={10} />
-                        {isOverdue
-                          ? 'Overdue'
-                          : `Due ${new Date(policy.expiry_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}`}
-                      </span>
-                    );
-                  })()}
               </div>
 
               {/* Action */}
@@ -452,7 +427,7 @@ export default function PolicyListPage() {
           onClose={() => setViewerPolicy(null)}
           onAcknowledged={() => {
             setViewerPolicy(null);
-            refetch();
+            queryClient.invalidateQueries({ queryKey: ['policies'] });
           }}
         />
       )}

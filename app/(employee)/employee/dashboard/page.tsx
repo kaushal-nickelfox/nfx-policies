@@ -5,7 +5,7 @@ import { usePolicyStore } from '@/store/usePolicyStore';
 import { useSession, signOut } from 'next-auth/react';
 import { FullPageSpinner } from '@/components/ui/Spinner';
 import { useEffect } from 'react';
-import { FileText, CheckCircle, Clock, Shield, BookOpen } from 'lucide-react';
+import { FileText, CheckCircle, Clock, Shield, BookOpen, PartyPopper } from 'lucide-react';
 import type { PolicyCategory } from '@/types/index';
 import { useIsMobile } from '@/hooks/useIsMobile';
 
@@ -34,8 +34,14 @@ const categoryIcon = (cat: string) => {
 export default function EmployeeDashboardPage() {
   const { data: session } = useSession();
   const { data: policies, isLoading } = usePolicies();
-  const { setPolicies, setSelectedCategory, selectedCategory, getFilteredPolicies } =
-    usePolicyStore();
+  const {
+    setPolicies,
+    setSelectedCategory,
+    selectedCategory,
+    getFilteredPolicies,
+    filter,
+    setFilter,
+  } = usePolicyStore();
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -46,6 +52,7 @@ export default function EmployeeDashboardPage() {
   const acknowledgedCount = policies?.filter((p) => p.is_acknowledged).length ?? 0;
   const totalPolicies = policies?.filter((p) => p.requires_acknowledgement).length ?? 0;
   const pendingCount = totalPolicies - acknowledgedCount;
+  const allDone = totalPolicies > 0 && pendingCount === 0;
 
   if (isLoading) return <FullPageSpinner />;
   return (
@@ -157,6 +164,32 @@ export default function EmployeeDashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* ── CELEBRATION BANNER ───────────────────────────── */}
+      {allDone && (
+        <div
+          style={{
+            background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+            borderRadius: 16,
+            padding: '20px 28px',
+            marginBottom: 24,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 16,
+            boxShadow: '0 4px 20px rgba(16,185,129,0.3)',
+          }}
+        >
+          <PartyPopper size={36} color="rgba(255,255,255,0.9)" />
+          <div>
+            <p style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#fff' }}>
+              You&apos;re all caught up!
+            </p>
+            <p style={{ margin: '4px 0 0', fontSize: 13, color: 'rgba(255,255,255,0.8)' }}>
+              You have acknowledged all {totalPolicies} required policies. Great work!
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* ── STAT CARDS ─────────────────────────────────── */}
       <div
@@ -298,6 +331,48 @@ export default function EmployeeDashboardPage() {
         </div>
       </div>
 
+      {/* ── STATUS FILTER TABS ──────────────────────────── */}
+      <div
+        style={{
+          display: 'flex',
+          gap: 8,
+          marginBottom: 16,
+          borderBottom: '2px solid #e2e8f0',
+          paddingBottom: 2,
+        }}
+      >
+        {(
+          [
+            { key: 'all', label: 'All', count: policies?.length ?? 0 },
+            { key: 'pending', label: 'Pending', count: pendingCount },
+            { key: 'acknowledged', label: 'Acknowledged', count: acknowledgedCount },
+          ] as const
+        ).map(({ key, label, count }) => {
+          const active = filter === key;
+          return (
+            <button
+              key={key}
+              onClick={() => setFilter(key)}
+              style={{
+                padding: '8px 16px',
+                borderRadius: 0,
+                fontSize: 13,
+                fontWeight: active ? 700 : 500,
+                cursor: 'pointer',
+                background: 'transparent',
+                color: active ? '#4F46E5' : '#6B7280',
+                border: 'none',
+                borderBottom: active ? '2px solid #4F46E5' : '2px solid transparent',
+                marginBottom: -2,
+                transition: 'all 0.15s',
+              }}
+            >
+              {label} ({count})
+            </button>
+          );
+        })}
+      </div>
+
       {/* ── FILTER PILLS — horizontal scroll on mobile ─── */}
       <div
         style={{
@@ -347,7 +422,9 @@ export default function EmployeeDashboardPage() {
           <div style={{ textAlign: 'center', padding: '64px 0', color: '#6B7280' }}>
             <FileText size={40} color="#d1d5db" style={{ margin: '0 auto 12px' }} />
             <p style={{ fontWeight: 600, color: '#374151' }}>No policies found</p>
-            <p style={{ fontSize: 13, marginTop: 4 }}>Try selecting a different category.</p>
+            <p style={{ fontSize: 13, marginTop: 4 }}>
+              Try selecting a different category or filter.
+            </p>
           </div>
         ) : (
           filteredPolicies.map((policy) => (

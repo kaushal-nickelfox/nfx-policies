@@ -1,32 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/authOptions';
-import { getPolicyFromOneDrive, getSignedDownloadUrl } from '@/lib/onedrive/storage';
+import { createServiceClient } from '@/lib/supabase/server';
+import { downloadFromSharingUrl } from '@/lib/onedrive/storage';
 
-// GET /api/policies/[id]/pdf - stream PDF from OneDrive through Next.js (avoids CORS)
+// GET /api/policies/[id]/pdf
+// Downloads the file from SharePoint via Graph API (avoids CORS + HTML redirect issues)
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session) return new NextResponse('Unauthorized', { status: 401 });
 
   const { id } = await params;
-  const accessToken = session.accessToken as string;
+  const supabase = createServiceClient();
+
+  const { data: policy, error } = await supabase
+    .from('policies')
+    .select('document_url, title, document_type')
+    .eq('id', id)
+    .single();
+
+  if (error || !policy) return new NextResponse('Policy not found', { status: 404 });
+  if (!policy.document_url) return new NextResponse('No document available', { status: 404 });
 
   try {
-    const policy = await getPolicyFromOneDrive(id, accessToken);
-    const downloadUrl = await getSignedDownloadUrl(policy.storage_path, accessToken);
+    const accessToken = session.accessToken as string;
+    const { buffer, mimeType } = await downloadFromSharingUrl(policy.document_url, accessToken);
 
-    const response = await fetch(downloadUrl);
-    if (!response.ok) return new NextResponse('Failed to fetch document', { status: 502 });
-
-    const buffer = await response.arrayBuffer();
+    const ext = policy.document_type === 'docx' ? 'docx' : 'pdf';
+    const fileName = `${policy.title.replace(/[^a-z0-9]/gi, '_')}.${ext}`;
 
     return new NextResponse(buffer, {
       headers: {
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `inline; filename="${policy.file_name}"`,
+        'Content-Type': mimeType,
+        'Content-Disposition': `inline; filename="${fileName}"`,
         'Cache-Control': 'private, max-age=300',
       },
     });
   } catch (e) {
-    return new NextResponse((e as Error).message, { status: 404 });
+    console.error('[pdf proxy]', e);
+    return new NextResponse((e as Error).message, { status: 500 });
   }
 }
