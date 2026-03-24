@@ -3,6 +3,7 @@
 import { useSession, signOut } from 'next-auth/react';
 import { useState } from 'react';
 import { useUIStore } from '@/store/useUIStore';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import {
   User,
   Mail,
@@ -181,6 +182,7 @@ function SettingsRow({
 export default function SettingsPage() {
   const { data: session } = useSession();
   const { isDarkMode, toggleDarkMode } = useUIStore();
+  const isMobile = useIsMobile();
   const [saved, setSaved] = useState(false);
 
   const handleSave = () => {
@@ -195,7 +197,7 @@ export default function SettingsPage() {
         maxWidth: 900,
         display: 'flex',
         flexDirection: 'column',
-        height: 'calc(100vh - 64px)',
+        ...(isMobile ? {} : { height: 'calc(100vh - 64px)' }),
       }}
     >
       {/* ── HEADER ─────────────────────── */}
@@ -317,7 +319,7 @@ export default function SettingsPage() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
+          gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
           gap: 14,
           flex: 1,
           minHeight: 0,

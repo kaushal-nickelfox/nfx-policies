@@ -22,6 +22,7 @@ import {
   Filter,
 } from 'lucide-react';
 import type { PolicyCategory, PolicyWithStatus } from '@/types/index';
+import { useIsMobile } from '@/hooks/useIsMobile';
 
 const CATEGORIES: (PolicyCategory | 'All')[] = [
   'All',
@@ -66,6 +67,7 @@ const categoryAccent: Record<string, string> = {
 export default function PolicyListPage() {
   const { data: policies, isLoading } = usePolicies();
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
   const [activeCategory, setActiveCategory] = useState<PolicyCategory | 'All'>('All');
   const [search, setSearch] = useState('');
   const [viewerPolicy, setViewerPolicy] = useState<PolicyWithStatus | null>(null);
@@ -87,11 +89,11 @@ export default function PolicyListPage() {
   return (
     <div style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
       {/* ── HEADER ─────────────────────── */}
-      <div style={{ marginBottom: 28 }}>
+      <div style={{ marginBottom: isMobile ? 16 : 28 }}>
         <h1
           style={{
             margin: 0,
-            fontSize: 26,
+            fontSize: isMobile ? 20 : 26,
             fontWeight: 700,
             color: '#111827',
             letterSpacing: '-0.4px',
@@ -109,8 +111,8 @@ export default function PolicyListPage() {
         style={{
           background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
           borderRadius: 16,
-          padding: '20px 28px',
-          marginBottom: 24,
+          padding: isMobile ? '16px 20px' : '20px 28px',
+          marginBottom: isMobile ? 16 : 24,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -157,17 +159,9 @@ export default function PolicyListPage() {
       </div>
 
       {/* ── SEARCH + FILTER ─────────────── */}
-      <div
-        style={{
-          display: 'flex',
-          gap: 12,
-          alignItems: 'center',
-          marginBottom: 20,
-          flexWrap: 'wrap',
-        }}
-      >
+      <div style={{ marginBottom: 20 }}>
         {/* Search */}
-        <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
+        <div style={{ position: 'relative', marginBottom: 12 }}>
           <Search
             size={15}
             color="#9ca3af"
@@ -194,39 +188,58 @@ export default function PolicyListPage() {
             }}
           />
         </div>
-        {/* Filter icon */}
+        {/* Category pills — horizontally scrollable on mobile */}
         <div
-          style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#6b7280', fontSize: 13 }}
+          style={{
+            display: 'flex',
+            gap: 8,
+            alignItems: 'center',
+            overflowX: 'auto',
+            flexWrap: isMobile ? 'nowrap' : 'wrap',
+            paddingBottom: isMobile ? 4 : 0,
+            WebkitOverflowScrolling: 'touch' as React.CSSProperties['WebkitOverflowScrolling'],
+          }}
         >
-          <Filter size={15} /> Filter:
+          <span
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              color: '#6b7280',
+              fontSize: 12,
+              flexShrink: 0,
+            }}
+          >
+            <Filter size={13} /> Filter:
+          </span>
+          {CATEGORIES.map((cat) => {
+            const active = activeCategory === cat;
+            const count =
+              cat === 'All'
+                ? (policies ?? []).length
+                : (policies ?? []).filter((p) => p.category === cat).length;
+            return (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                style={{
+                  padding: '6px 13px',
+                  borderRadius: 999,
+                  fontSize: 12,
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  flexShrink: 0,
+                  background: active ? '#4F46E5' : '#fff',
+                  color: active ? '#fff' : '#374151',
+                  border: active ? '1px solid #4F46E5' : '1px solid #e2e8f0',
+                  transition: 'all 0.15s',
+                }}
+              >
+                {cat} ({count})
+              </button>
+            );
+          })}
         </div>
-        {/* Category pills */}
-        {CATEGORIES.map((cat) => {
-          const active = activeCategory === cat;
-          const count =
-            cat === 'All'
-              ? (policies ?? []).length
-              : (policies ?? []).filter((p) => p.category === cat).length;
-          return (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              style={{
-                padding: '7px 14px',
-                borderRadius: 999,
-                fontSize: 12,
-                fontWeight: 500,
-                cursor: 'pointer',
-                background: active ? '#4F46E5' : '#fff',
-                color: active ? '#fff' : '#374151',
-                border: active ? '1px solid #4F46E5' : '1px solid #e2e8f0',
-                transition: 'all 0.15s',
-              }}
-            >
-              {cat} ({count})
-            </button>
-          );
-        })}
       </div>
 
       {/* ── POLICY CARDS GRID ─────────────── */}
@@ -240,8 +253,8 @@ export default function PolicyListPage() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
-            gap: 16,
+            gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(340px, 1fr))',
+            gap: isMobile ? 12 : 16,
           }}
         >
           {filtered.map((policy) => (

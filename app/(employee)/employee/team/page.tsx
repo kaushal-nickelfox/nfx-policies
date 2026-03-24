@@ -11,6 +11,7 @@ import {
   BarChart2,
   Building2,
 } from 'lucide-react';
+import { useIsMobile } from '@/hooks/useIsMobile';
 
 function ProgressRing({
   pct,
@@ -58,6 +59,7 @@ const deptColors = [
 
 export default function TeamProgressPage() {
   const { data: stats, isLoading } = useTeamStats();
+  const isMobile = useIsMobile();
   if (isLoading) return <FullPageSpinner />;
 
   const pct = stats?.overall_completion_percent ?? 0;
@@ -88,8 +90,8 @@ export default function TeamProgressPage() {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: 16,
+          gridTemplateColumns: isMobile ? '1fr 1fr' : 'repeat(4, 1fr)',
+          gap: isMobile ? 10 : 16,
           marginBottom: 28,
         }}
       >
@@ -129,11 +131,11 @@ export default function TeamProgressPage() {
               background: '#fff',
               border: '1px solid #e2e8f0',
               borderRadius: 16,
-              padding: '20px 22px',
+              padding: isMobile ? '14px 12px' : '20px 22px',
               boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
               display: 'flex',
               alignItems: 'center',
-              gap: 14,
+              gap: isMobile ? 10 : 14,
             }}
           >
             <div
@@ -154,7 +156,7 @@ export default function TeamProgressPage() {
               <p
                 style={{
                   margin: 0,
-                  fontSize: 22,
+                  fontSize: isMobile ? 18 : 22,
                   fontWeight: 800,
                   color: '#111827',
                   lineHeight: 1,
@@ -162,7 +164,7 @@ export default function TeamProgressPage() {
               >
                 {value}
               </p>
-              <p style={{ margin: '6px 0 0', fontSize: 11, color: '#6B7280', fontWeight: 500 }}>
+              <p style={{ margin: '4px 0 0', fontSize: 11, color: '#6B7280', fontWeight: 500 }}>
                 {label}
               </p>
             </div>
@@ -175,36 +177,45 @@ export default function TeamProgressPage() {
         style={{
           background: 'linear-gradient(135deg, #1E1B2E 0%, #2D2A45 100%)',
           borderRadius: 20,
-          padding: '28px 32px',
+          padding: isMobile ? '20px' : '28px 32px',
           marginBottom: 24,
           display: 'flex',
           alignItems: 'center',
-          gap: 28,
+          gap: isMobile ? 16 : 28,
+          flexWrap: 'wrap',
           boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
         }}
       >
-        <div style={{ position: 'relative', flexShrink: 0 }}>
-          <ProgressRing pct={Math.round(pct)} size={96} stroke={8} color="#818cf8" />
-          <div
+        {!isMobile && (
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <ProgressRing pct={Math.round(pct)} size={96} stroke={8} color="#818cf8" />
+            <div
+              style={{
+                position: 'absolute',
+                inset: 0,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 16,
+                fontWeight: 800,
+                color: '#fff',
+              }}
+            >
+              {Math.round(pct)}%
+            </div>
+          </div>
+        )}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ margin: 0, fontSize: isMobile ? 18 : 22, fontWeight: 800, color: '#fff' }}>
+            {isMobile ? `${Math.round(pct)}% Company Completion` : 'Company Completion Rate'}
+          </p>
+          <p
             style={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: 16,
-              fontWeight: 800,
-              color: '#fff',
+              margin: '6px 0 0',
+              fontSize: isMobile ? 12 : 14,
+              color: 'rgba(255,255,255,0.6)',
             }}
           >
-            {Math.round(pct)}%
-          </div>
-        </div>
-        <div>
-          <p style={{ margin: 0, fontSize: 22, fontWeight: 800, color: '#fff' }}>
-            Company Completion Rate
-          </p>
-          <p style={{ margin: '6px 0 0', fontSize: 14, color: 'rgba(255,255,255,0.6)' }}>
             {stats?.total_acknowledgements ?? 0} of{' '}
             {(stats?.total_employees ?? 0) * (stats?.total_policies ?? 0)} expected acknowledgements
             recorded
@@ -216,7 +227,8 @@ export default function TeamProgressPage() {
               height: 8,
               background: 'rgba(255,255,255,0.1)',
               borderRadius: 999,
-              width: 320,
+              maxWidth: 320,
+              width: '100%',
               overflow: 'hidden',
             }}
           >
@@ -231,12 +243,20 @@ export default function TeamProgressPage() {
             />
           </div>
         </div>
-        <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
-          <Award size={48} color="rgba(129,140,248,0.3)" />
-        </div>
+        {!isMobile && (
+          <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
+            <Award size={48} color="rgba(129,140,248,0.3)" />
+          </div>
+        )}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+          gap: isMobile ? 16 : 20,
+        }}
+      >
         {/* ── DEPARTMENT BREAKDOWN ─────── */}
         <div
           style={{
@@ -321,7 +341,7 @@ export default function TeamProgressPage() {
             </p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {policyData.map((p, _i) => {
+              {policyData.map((p) => {
                 const pct2 = Math.round(p.completion_percent);
                 const color = pct2 >= 80 ? '#10B981' : pct2 >= 50 ? '#F59E0B' : '#EF4444';
                 return (
