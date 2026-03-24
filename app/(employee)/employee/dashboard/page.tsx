@@ -2,25 +2,11 @@
 
 import { usePolicies } from '@/hooks/usePolicies';
 import { usePolicyStore } from '@/store/usePolicyStore';
-import { useUIStore } from '@/store/useUIStore';
 import { useSession, signOut } from 'next-auth/react';
-import { useQueryClient } from '@tanstack/react-query';
-import Modal from '@/components/ui/Modal';
-import DocumentViewer from '@/components/viewer/DocumentViewer';
 import { FullPageSpinner } from '@/components/ui/Spinner';
-import { useEffect, useState } from 'react';
-import {
-  FileText,
-  CheckCircle,
-  Clock,
-  Shield,
-  BookOpen,
-  CheckSquare,
-  Calendar,
-  Tag,
-  Hash,
-} from 'lucide-react';
-import type { PolicyCategory, PolicyWithStatus } from '@/types/index';
+import { useEffect } from 'react';
+import { FileText, CheckCircle, Clock, Shield, BookOpen } from 'lucide-react';
+import type { PolicyCategory } from '@/types/index';
 import { useIsMobile } from '@/hooks/useIsMobile';
 
 const CATEGORIES: (PolicyCategory | 'All')[] = [
@@ -48,11 +34,8 @@ const categoryIcon = (cat: string) => {
 export default function EmployeeDashboardPage() {
   const { data: session } = useSession();
   const { data: policies, isLoading } = usePolicies();
-  const queryClient = useQueryClient();
   const { setPolicies, setSelectedCategory, selectedCategory, getFilteredPolicies } =
     usePolicyStore();
-  const { isViewerOpen, openViewer, closeViewer } = useUIStore();
-  const [viewerPolicy, setViewerPolicy] = useState<PolicyWithStatus | null>(null);
   const isMobile = useIsMobile();
 
   useEffect(() => {
@@ -63,14 +46,6 @@ export default function EmployeeDashboardPage() {
   const acknowledgedCount = policies?.filter((p) => p.is_acknowledged).length ?? 0;
   const totalPolicies = policies?.filter((p) => p.requires_acknowledgement).length ?? 0;
   const pendingCount = totalPolicies - acknowledgedCount;
-
-  const handleView = (id: string) => {
-    const policy = policies?.find((p) => p.id === id);
-    if (policy) {
-      setViewerPolicy(policy);
-      openViewer(id);
-    }
-  };
 
   if (isLoading) return <FullPageSpinner />;
   return (
@@ -472,7 +447,7 @@ export default function EmployeeDashboardPage() {
                 </div>
               </div>
 
-              {/* Action */}
+              {/* Status */}
               <div style={{ flexShrink: 0 }}>
                 {policy.is_acknowledged ? (
                   <div
@@ -488,369 +463,24 @@ export default function EmployeeDashboardPage() {
                     <CheckCircle size={16} /> Acknowledged
                   </div>
                 ) : (
-                  <button
-                    onClick={() => handleView(policy.id)}
+                  <div
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 8,
-                      padding: isMobile ? '10px' : '10px 20px',
-                      width: isMobile ? '100%' : 'auto',
-                      borderRadius: 10,
-                      border: 'none',
-                      background: '#4F46E5',
-                      color: '#fff',
+                      gap: 6,
+                      color: '#D97706',
                       fontSize: 13,
                       fontWeight: 600,
-                      cursor: 'pointer',
-                      boxShadow: '0 2px 8px rgba(79,70,229,0.3)',
                     }}
                   >
-                    <CheckSquare size={15} />
-                    {isMobile
-                      ? 'Read & Acknowledge'
-                      : `Read & Acknowledge${policy.requires_acknowledgement ? ' (Required)' : ''}`}
-                  </button>
+                    <Clock size={16} /> Pending
+                  </div>
                 )}
               </div>
             </div>
           ))
         )}
       </div>
-
-      {/* Policy Viewer + Acknowledge Modal */}
-      {isViewerOpen && viewerPolicy && (
-        <PolicyViewerModal
-          policy={viewerPolicy}
-          onClose={closeViewer}
-          onAcknowledged={() => {
-            const policyId = viewerPolicy.id;
-            closeViewer();
-            // Optimistic update: immediately mark as acknowledged in the store
-            if (policies) {
-              setPolicies(
-                policies.map((p) =>
-                  p.id === policyId
-                    ? { ...p, is_acknowledged: true, acknowledged_at: new Date().toISOString() }
-                    : p
-                )
-              );
-            }
-            // Also invalidate the server cache to sync fresh data
-            queryClient.invalidateQueries({ queryKey: ['policies'] });
-          }}
-        />
-      )}
     </div>
-  );
-}
-
-/* ── Inline Policy Viewer + Acknowledge Modal ─────────────── */
-function PolicyViewerModal({
-  policy,
-  onClose,
-  onAcknowledged,
-}: {
-  policy: PolicyWithStatus;
-  onClose: () => void;
-  onAcknowledged: () => void;
-}) {
-  const [confirmed, setConfirmed] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState(false);
-
-  const handleAcknowledge = async () => {
-    if (!confirmed) return;
-    setIsSubmitting(true);
-    setError(null);
-    try {
-      const res = await fetch('/api/acknowledge', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ policy_id: policy.id, policy_version: policy.version }),
-      });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || 'Failed to acknowledge');
-      }
-      setDone(true);
-      setTimeout(() => {
-        onAcknowledged();
-      }, 1200);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'An error occurred');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const categoryColors: Record<string, string> = {
-    Security: '#EFF6FF',
-    Behavior: '#F5F3FF',
-    Attendance: '#FFF7ED',
-    'Remote Work': '#F0FDF4',
-    General: '#F8FAFC',
-  };
-  const bgColor = categoryColors[policy.category] ?? '#F8FAFC';
-
-  return (
-    <Modal isOpen onClose={onClose} title={policy.title} size="xl">
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-        {/* Policy meta strip */}
-        <div
-          style={{
-            display: 'flex',
-            gap: 12,
-            flexWrap: 'wrap',
-            marginBottom: 20,
-          }}
-        >
-          <span
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 5,
-              fontSize: 12,
-              fontWeight: 600,
-              padding: '4px 12px',
-              borderRadius: 999,
-              background: '#EEF2FF',
-              color: '#4F46E5',
-            }}
-          >
-            <Tag size={11} /> {policy.category}
-          </span>
-          <span
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 5,
-              fontSize: 12,
-              fontWeight: 600,
-              padding: '4px 12px',
-              borderRadius: 999,
-              background: '#F1F5F9',
-              color: '#475569',
-            }}
-          >
-            <Hash size={11} /> Version {policy.version}
-          </span>
-          <span
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 5,
-              fontSize: 12,
-              fontWeight: 600,
-              padding: '4px 12px',
-              borderRadius: 999,
-              background: '#F1F5F9',
-              color: '#475569',
-            }}
-          >
-            <Calendar size={11} /> Updated:{' '}
-            {new Date(policy.updated_at).toLocaleDateString('en-GB', {
-              day: '2-digit',
-              month: 'short',
-              year: 'numeric',
-            })}
-          </span>
-        </div>
-
-        {/* Document or content */}
-        {policy.document_url ? (
-          <div
-            style={{
-              height: '55vh',
-              marginBottom: 20,
-              borderRadius: 12,
-              overflow: 'hidden',
-              border: '1px solid #e2e8f0',
-            }}
-          >
-            <DocumentViewer
-              policyId={policy.id}
-              documentUrl={policy.document_url}
-              documentType={policy.document_type}
-            />
-          </div>
-        ) : (
-          <div
-            style={{
-              background: bgColor,
-              border: '1px solid #e2e8f0',
-              borderRadius: 14,
-              padding: '28px 28px',
-              marginBottom: 20,
-              minHeight: 200,
-              maxHeight: '50vh',
-              overflowY: 'auto',
-            }}
-          >
-            <h3 style={{ margin: '0 0 14px', fontSize: 17, fontWeight: 700, color: '#111827' }}>
-              {policy.title}
-            </h3>
-            <p style={{ margin: 0, fontSize: 14, color: '#374151', lineHeight: 1.75 }}>
-              {policy.description ||
-                'This policy document is managed by HR. Please read it carefully before acknowledging.'}
-            </p>
-            {/* Placeholder policy body sections */}
-            <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 16 }}>
-              {[
-                {
-                  heading: 'Purpose',
-                  body: `This policy outlines the guidelines and expectations for ${(policy.category ?? policy.title).toLowerCase()}-related matters within the organization.`,
-                },
-                {
-                  heading: 'Scope',
-                  body: 'This policy applies to all full-time, part-time, and contract employees of the company.',
-                },
-                {
-                  heading: 'Responsibilities',
-                  body: 'All employees are responsible for reading, understanding, and adhering to this policy. Managers are responsible for ensuring their teams are compliant.',
-                },
-                {
-                  heading: 'Acknowledgement',
-                  body: 'By clicking "Confirm Acknowledgement" below, you confirm that you have read and understood this policy in full.',
-                },
-              ].map((section) => (
-                <div key={section.heading}>
-                  <h4
-                    style={{
-                      margin: '0 0 6px',
-                      fontSize: 13,
-                      fontWeight: 700,
-                      color: '#1E293B',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
-                    }}
-                  >
-                    {section.heading}
-                  </h4>
-                  <p style={{ margin: 0, fontSize: 13.5, color: '#475569', lineHeight: 1.7 }}>
-                    {section.body}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Already acknowledged */}
-        {policy.is_acknowledged ? (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              padding: '14px 20px',
-              borderRadius: 12,
-              background: '#D1FAE5',
-              border: '1px solid #6EE7B7',
-            }}
-          >
-            <CheckCircle size={18} color="#059669" />
-            <span style={{ fontSize: 14, fontWeight: 600, color: '#059669' }}>
-              You have already acknowledged this policy.
-            </span>
-          </div>
-        ) : done ? (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              padding: '14px 20px',
-              borderRadius: 12,
-              background: '#D1FAE5',
-              border: '1px solid #6EE7B7',
-            }}
-          >
-            <CheckCircle size={18} color="#059669" />
-            <span style={{ fontSize: 14, fontWeight: 600, color: '#059669' }}>
-              Acknowledged successfully!
-            </span>
-          </div>
-        ) : (
-          <div
-            style={{
-              background: '#FAFAFA',
-              border: '1px solid #e2e8f0',
-              borderRadius: 12,
-              padding: '16px 20px',
-            }}
-          >
-            <label
-              style={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: 12,
-                cursor: 'pointer',
-                marginBottom: 14,
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={confirmed}
-                onChange={(e) => setConfirmed(e.target.checked)}
-                style={{
-                  marginTop: 2,
-                  width: 16,
-                  height: 16,
-                  accentColor: '#4F46E5',
-                  cursor: 'pointer',
-                }}
-              />
-              <span style={{ fontSize: 13.5, color: '#374151', lineHeight: 1.6 }}>
-                I confirm that I have read and understood the <strong>{policy.title}</strong> (v
-                {policy.version}) in full.
-              </span>
-            </label>
-            {error && <p style={{ margin: '0 0 10px', fontSize: 13, color: '#DC2626' }}>{error}</p>}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-              <button
-                onClick={onClose}
-                style={{
-                  padding: '9px 20px',
-                  borderRadius: 8,
-                  border: '1px solid #d1d5db',
-                  background: '#fff',
-                  color: '#374151',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleAcknowledge}
-                disabled={!confirmed || isSubmitting}
-                style={{
-                  padding: '9px 22px',
-                  borderRadius: 8,
-                  border: 'none',
-                  background: confirmed ? '#4F46E5' : '#C7D2FE',
-                  color: '#fff',
-                  fontSize: 13,
-                  fontWeight: 600,
-                  cursor: confirmed ? 'pointer' : 'not-allowed',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  boxShadow: confirmed ? '0 2px 8px rgba(79,70,229,0.3)' : 'none',
-                  transition: 'all 0.15s',
-                }}
-              >
-                <CheckSquare size={14} />
-                {isSubmitting ? 'Submitting...' : 'Confirm Acknowledgement'}
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-    </Modal>
   );
 }
