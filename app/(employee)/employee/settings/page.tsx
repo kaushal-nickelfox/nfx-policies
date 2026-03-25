@@ -191,7 +191,7 @@ export default function SettingsPage() {
     <div
       style={{
         fontFamily: 'Inter, system-ui, sans-serif',
-        maxWidth: 900,
+        width: '100%',
         display: 'flex',
         flexDirection: 'column',
         ...(isMobile ? {} : { height: 'calc(100vh - 64px)' }),
@@ -320,6 +320,7 @@ export default function SettingsPage() {
           gap: 14,
           flex: 1,
           minHeight: 0,
+          alignItems: 'stretch',
         }}
       >
         {/* LEFT COLUMN */}
@@ -352,8 +353,8 @@ export default function SettingsPage() {
         </SettingsSection>
 
         {/* RIGHT COLUMN */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minHeight: 0 }}>
-          <SettingsSection title="Notification Preferences" grow>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minHeight: 0, flex: 1 }}>
+          <SettingsSection title="Notification Preferences" grow={true}>
             <SettingsRow
               icon={Bell}
               label="New Policy Alerts"
