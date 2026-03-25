@@ -44,7 +44,7 @@ function SettingsSection({
           flexShrink: 0,
         }}
       >
-        <h2 style={{ margin: 0, fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
+        <h2 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>
           {title}
         </h2>
       </div>
@@ -133,7 +133,7 @@ function SettingsRow({
         <p
           style={{
             margin: 0,
-            fontSize: 13.5,
+            fontSize: 15,
             fontWeight: 600,
             color: danger ? '#EF4444' : 'var(--text-primary)',
           }}
@@ -141,7 +141,7 @@ function SettingsRow({
           {label}
         </p>
         {value && (
-          <p style={{ margin: '2px 0 0', fontSize: 12, color: 'var(--text-muted)' }}>{value}</p>
+          <p style={{ margin: '2px 0 0', fontSize: 13, color: 'var(--text-muted)' }}>{value}</p>
         )}
       </div>
       {toggle ? (
@@ -210,7 +210,7 @@ export default function SettingsPage() {
         >
           Settings
         </h1>
-        <p style={{ margin: '4px 0 0', fontSize: 13, color: 'var(--text-secondary)' }}>
+        <p style={{ margin: '4px 0 0', fontSize: 15, color: 'var(--text-secondary)' }}>
           Manage your account and preferences.
         </p>
       </div>
@@ -262,10 +262,10 @@ export default function SettingsPage() {
           </div>
         )}
         <div style={{ flex: 1 }}>
-          <p style={{ margin: 0, fontSize: 17, fontWeight: 800, color: '#fff' }}>
+          <p style={{ margin: 0, fontSize: 19, fontWeight: 800, color: '#fff' }}>
             {session?.user?.name ?? '—'}
           </p>
-          <p style={{ margin: '4px 0 0', fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>
+          <p style={{ margin: '4px 0 0', fontSize: 14, color: 'rgba(255,255,255,0.6)' }}>
             {session?.user?.email ?? '—'}
           </p>
           <span
