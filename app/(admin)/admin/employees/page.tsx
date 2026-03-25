@@ -19,6 +19,7 @@ import {
   UserCheck,
   ShieldCheck,
   ShieldOff,
+  AlertTriangle,
 } from 'lucide-react';
 import type { EmployeeWithStats, Policy, Acknowledgement, UserRole } from '@/types/index';
 
@@ -92,6 +93,7 @@ function RoleToggleButton({
   const queryClient = useQueryClient();
   const isSelf = emp.azure_oid === currentAzureOid;
   const isAdmin = emp.role === 'admin';
+  const [confirming, setConfirming] = useState(false);
 
   const { mutate, isPending, error } = useMutation({
     mutationFn: async (newRole: UserRole) => {
@@ -105,14 +107,88 @@ function RoleToggleButton({
         throw new Error(data.error || 'Failed to update role');
       }
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin-employees-v2'] }),
+    onSuccess: () => {
+      setConfirming(false);
+      queryClient.invalidateQueries({ queryKey: ['admin-employees-v2'] });
+    },
+    onError: () => setConfirming(false),
   });
+
+  if (confirming) {
+    return (
+      <div
+        style={{
+          borderRadius: 10,
+          border: `1px solid ${isAdmin ? '#FCA5A5' : '#6EE7B7'}`,
+          background: isAdmin ? '#FFF5F5' : '#F0FDF4',
+          padding: '12px 14px',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+          <AlertTriangle size={15} color={isAdmin ? '#DC2626' : '#059669'} />
+          <p
+            style={{
+              margin: 0,
+              fontSize: 13,
+              fontWeight: 600,
+              color: isAdmin ? '#DC2626' : '#059669',
+            }}
+          >
+            {isAdmin
+              ? `Remove admin access from ${emp.name}?`
+              : `Grant admin access to ${emp.name}?`}
+          </p>
+        </div>
+        <p style={{ margin: '0 0 12px', fontSize: 12, color: '#6B7280' }}>
+          {isAdmin
+            ? 'They will lose access to the admin panel immediately.'
+            : 'They will gain full access to the admin panel.'}
+        </p>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={() => setConfirming(false)}
+            style={{
+              flex: 1,
+              padding: '8px',
+              borderRadius: 8,
+              border: '1px solid #e2e8f0',
+              background: '#fff',
+              color: '#374151',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            disabled={isPending}
+            onClick={() => mutate(isAdmin ? 'employee' : 'admin')}
+            style={{
+              flex: 1,
+              padding: '8px',
+              borderRadius: 8,
+              border: 'none',
+              background: isAdmin ? '#DC2626' : '#059669',
+              color: '#fff',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: isPending ? 'not-allowed' : 'pointer',
+              opacity: isPending ? 0.7 : 1,
+            }}
+          >
+            {isPending ? 'Saving…' : 'Confirm'}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
       <button
-        disabled={isSelf || isPending}
-        onClick={() => mutate(isAdmin ? 'employee' : 'admin')}
+        disabled={isSelf}
+        onClick={() => setConfirming(true)}
         style={{
           width: '100%',
           padding: '9px',
@@ -122,7 +198,7 @@ function RoleToggleButton({
           color: isAdmin ? '#DC2626' : '#059669',
           fontSize: 13,
           fontWeight: 600,
-          cursor: isSelf || isPending ? 'not-allowed' : 'pointer',
+          cursor: isSelf ? 'not-allowed' : 'pointer',
           opacity: isSelf ? 0.4 : 1,
           display: 'flex',
           alignItems: 'center',
@@ -132,7 +208,7 @@ function RoleToggleButton({
         }}
       >
         {isAdmin ? <ShieldOff size={14} /> : <ShieldCheck size={14} />}
-        {isPending ? 'Saving…' : isAdmin ? 'Revoke Admin' : 'Make Admin'}
+        {isAdmin ? 'Revoke Admin' : 'Make Admin'}
       </button>
       {error && (
         <p style={{ margin: '4px 0 0', fontSize: 11, color: '#DC2626', textAlign: 'center' }}>
@@ -442,10 +518,29 @@ export default function AdminEmployeesPage() {
             Compliance tracking for {employees.length} employee{employees.length !== 1 ? 's' : ''}
           </p>
         </div>
-        <ExportReportButton
-          employees={employees}
-          policyCompletion={data?.policy_completion ?? []}
-        />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '8px 14px',
+              borderRadius: 10,
+              border: '1px solid #e2e8f0',
+              background: '#F8FAFC',
+              fontSize: 12,
+              color: '#6B7280',
+              fontWeight: 500,
+            }}
+          >
+            <ShieldCheck size={14} color="#4F46E5" />
+            Manage roles via <span style={{ color: '#4F46E5', fontWeight: 700 }}>View Details</span>
+          </div>
+          <ExportReportButton
+            employees={employees}
+            policyCompletion={data?.policy_completion ?? []}
+          />
+        </div>
       </div>
 
       {/* Stats */}
@@ -734,34 +829,28 @@ export default function AdminEmployeesPage() {
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button
-                    onClick={() => setSelectedEmp(emp)}
-                    style={{
-                      flex: 1,
-                      padding: '9px',
-                      borderRadius: 9,
-                      border: '1px solid #e2e8f0',
-                      background: '#F8FAFC',
-                      color: '#4F46E5',
-                      fontSize: 13,
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: 6,
-                      transition: 'background 0.15s',
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = '#EEF2FF')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = '#F8FAFC')}
-                  >
-                    View Details
-                  </button>
-                  <div style={{ flex: 1 }}>
-                    <RoleToggleButton emp={emp} currentAzureOid={currentAzureOid} />
-                  </div>
-                </div>
+                <button
+                  onClick={() => setSelectedEmp(emp)}
+                  style={{
+                    padding: '9px',
+                    borderRadius: 9,
+                    border: '1px solid #e2e8f0',
+                    background: '#F8FAFC',
+                    color: '#4F46E5',
+                    fontSize: 13,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                    transition: 'background 0.15s',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = '#EEF2FF')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = '#F8FAFC')}
+                >
+                  View Details
+                </button>
               </div>
             );
           })}
