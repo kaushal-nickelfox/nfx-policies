@@ -11,9 +11,6 @@ import {
   Briefcase,
   Shield,
   Bell,
-  Moon,
-  Sun,
-  Globe,
   LogOut,
   ChevronRight,
   CheckCircle,
@@ -181,7 +178,7 @@ function SettingsRow({
 
 export default function SettingsPage() {
   const { data: session } = useSession();
-  const { isDarkMode, toggleDarkMode } = useUIStore();
+  const { isDarkMode } = useUIStore();
   const isMobile = useIsMobile();
   const [saved, setSaved] = useState(false);
 
@@ -326,53 +323,33 @@ export default function SettingsPage() {
         }}
       >
         {/* LEFT COLUMN */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minHeight: 0 }}>
-          <SettingsSection title="Account Information" grow>
-            <SettingsRow
-              icon={User}
-              label="Full Name"
-              value={session?.user?.name ?? '—'}
-              iconColor="#4F46E5"
-            />
-            <SettingsRow
-              icon={Mail}
-              label="Email"
-              value={session?.user?.email ?? '—'}
-              iconColor="#0EA5E9"
-            />
-            <SettingsRow
-              icon={Building2}
-              label="Department"
-              value={(session?.user as unknown as Record<string, string>)?.department ?? 'Not set'}
-              iconColor="#7C3AED"
-            />
-            <SettingsRow icon={Briefcase} label="Role" value="Employee" iconColor="#10B981" />
-            <SettingsRow
-              icon={Lock}
-              label="Authentication"
-              value="Microsoft Azure AD (SSO)"
-              iconColor="#6B7280"
-            />
-          </SettingsSection>
-
-          <SettingsSection title="Preferences">
-            <SettingsRow
-              icon={isDarkMode ? Moon : Sun}
-              label="Dark Mode"
-              value={isDarkMode ? 'On — dark theme active' : 'Off — light theme active'}
-              iconColor="#6366f1"
-              toggle
-              toggled={isDarkMode}
-              onToggleChange={toggleDarkMode}
-            />
-            <SettingsRow
-              icon={Globe}
-              label="Language"
-              value="English (Default)"
-              iconColor="#0EA5E9"
-            />
-          </SettingsSection>
-        </div>
+        <SettingsSection title="Account Information" grow>
+          <SettingsRow
+            icon={User}
+            label="Full Name"
+            value={session?.user?.name ?? '—'}
+            iconColor="#4F46E5"
+          />
+          <SettingsRow
+            icon={Mail}
+            label="Email"
+            value={session?.user?.email ?? '—'}
+            iconColor="#0EA5E9"
+          />
+          <SettingsRow
+            icon={Building2}
+            label="Department"
+            value={(session?.user as unknown as Record<string, string>)?.department ?? 'Not set'}
+            iconColor="#7C3AED"
+          />
+          <SettingsRow icon={Briefcase} label="Role" value="Employee" iconColor="#10B981" />
+          <SettingsRow
+            icon={Lock}
+            label="Authentication"
+            value="Microsoft Azure AD (SSO)"
+            iconColor="#6B7280"
+          />
+        </SettingsSection>
 
         {/* RIGHT COLUMN */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minHeight: 0 }}>
