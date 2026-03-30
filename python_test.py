@@ -9,3 +9,11 @@ def add_numbers(a, b):
 
 
 print(add_numbers(2, 3))
+
+
+#here is the addintion of multiplication as well
+def multiply_numbers(a, b):
+    return a * b
+
+
+print(multiply_numbers(2, 3))
